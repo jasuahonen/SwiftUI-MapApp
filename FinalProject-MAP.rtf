@@ -1,0 +1,617 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 Menlo-Bold;}
+{\colortbl;\red255\green255\blue255;\red108\green121\blue134;\red31\green31\blue36;\red255\green255\blue255;
+\red252\green95\blue163;\red93\green216\blue255;\red208\green168\blue255;\red208\green168\blue255;\red65\green161\blue192;
+\red103\green183\blue164;\red161\green103\blue230;\red103\green183\blue164;\red161\green103\blue230;\red252\green106\blue93;
+\red158\green241\blue221;\red208\green191\blue105;\red158\green241\blue221;}
+{\*\expandedcolortbl;;\csgenericrgb\c42394\c47462\c52518;\csgenericrgb\c12054\c12284\c14131;\csgenericrgb\c100000\c100000\c100000\c85000;
+\csgenericrgb\c98839\c37355\c63833;\csgenericrgb\c36295\c84643\c99897;\csgenericrgb\c81569\c65882\c100000;\csgenericrgb\c81681\c65692\c99927;\csgenericrgb\c25490\c63137\c75294;
+\csgenericrgb\c40392\c71765\c64314;\csgenericrgb\c63137\c40392\c90196;\csgenericrgb\c40538\c71705\c64209;\csgenericrgb\c63232\c40219\c90115;\csgenericrgb\c98912\c41558\c36568;
+\csgenericrgb\c61961\c94510\c86667;\csgenericrgb\c81498\c74939\c41233;\csgenericrgb\c62145\c94386\c86819;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab593
+\pard\tx593\pardeftab593\partightenfactor0
+
+\f0\fs24 \cf2 \cb3 //\cf4 \
+\cf2 // ContentView-Swift\cf4 \
+\cf2 // final-project\cf4 \
+\cf2 //\cf4 \
+\cf2 // Created By Jasu Ahonen on 14.11.2024.\cf4 \
+\cf2 //\cf4 \
+
+\f1\b \cf5 import
+\f0\b0 \cf4  SwiftUI\
+
+\f1\b \cf5 import
+\f0\b0 \cf4  MapKit\
+
+\f1\b \cf5 import
+\f0\b0 \cf4  CoreLocation\
+\
+
+\f1\b \cf5 class
+\f0\b0 \cf4  \cf6 LocationViewModel\cf4 : \cf7 NSObject\cf4 , \cf8 ObservableObject\cf4 , \cf7 CLLocationManagerDelegate\cf4  \{\
+    \cf8 @Published\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 savedLocations\cf4 : [(coordinate: \cf8 CLLocationCoordinate2D\cf4 , name: \cf8 String\cf4 )] = [] \{\
+        
+\f1\b \cf5 didSet
+\f0\b0 \cf4  \{\
+            \cf10 saveLocationsToUserDefaults\cf4 ()\
+        \}\
+    \}\
+    \cf8 @Published\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 userLocation\cf4 : \cf8 CLLocationCoordinate2D\cf4 ?\
+    \cf8 @Published\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 locationPermissionDenied\cf4  = 
+\f1\b \cf5 false
+\f0\b0 \cf4  \cf2 // Track if permission is denied\cf4 \
+    \cf8 @Published\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 shouldCenterOnUser\cf4  = 
+\f1\b \cf5 false
+\f0\b0 \cf4  \cf2 // Track if map should center on user location\cf4 \
+    \
+    
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 let
+\f0\b0 \cf4  \cf9 locationManager\cf4  = \cf7 CLLocationManager\cf4 ()\
+    \
+    
+\f1\b \cf5 override
+\f0\b0 \cf4  
+\f1\b \cf5 init
+\f0\b0 \cf4 () \{\
+        
+\f1\b \cf5 super
+\f0\b0 \cf4 .\cf11 init\cf4 ()\
+        \cf12 locationManager\cf4 .\cf13 delegate\cf4  = 
+\f1\b \cf5 self
+\f0\b0 \cf4 \
+        \cf12 locationManager\cf4 .\cf13 desiredAccuracy\cf4  = \cf13 kCLLocationAccuracyBest\cf4 \
+        \cf10 loadLocationsFromUserDefaults\cf4 ()\
+    \}\
+    \
+    
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 requestLocationPermission\cf4 () \{\
+        \cf12 locationManager\cf4 .\cf11 requestWhenInUseAuthorization\cf4 ()\
+    \}\
+    \
+    
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 updateUserLocation\cf4 () \{\
+        \cf12 locationManager\cf4 .\cf11 startUpdatingLocation\cf4 ()\
+        \cf12 shouldCenterOnUser\cf4  = 
+\f1\b \cf5 true
+\f0\b0 \cf4  \cf2 // Set flag to center on user location when requested\cf4 \
+    \}\
+    \
+    
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 saveLocationsToUserDefaults\cf4 () \{\
+        
+\f1\b \cf5 let
+\f0\b0 \cf4  locations = \cf12 savedLocations\cf4 .\cf11 map\cf4  \{ [\cf14 "latitude"\cf4 : $0.\cf13 coordinate\cf4 .\cf13 latitude\cf4 , \cf14 "longitude"\cf4 : $0.\cf13 coordinate\cf4 .\cf13 longitude\cf4 , \cf14 "name"\cf4 : $0.\cf13 name\cf4 ] \}\
+        \cf7 UserDefaults\cf4 .\cf13 standard\cf4 .\cf11 set\cf4 (locations, \cf11 forKey\cf4 : \cf14 "savedLocations"\cf4 )\
+    \}\
+    \
+    
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 loadLocationsFromUserDefaults\cf4 () \{\
+        
+\f1\b \cf5 if
+\f0\b0 \cf4  
+\f1\b \cf5 let
+\f0\b0 \cf4  savedData = \cf7 UserDefaults\cf4 .\cf13 standard\cf4 .\cf11 array\cf4 (\cf11 forKey\cf4 : \cf14 "savedLocations"\cf4 ) 
+\f1\b \cf5 as
+\f0\b0 \cf4 ? [[\cf8 String\cf4 : 
+\f1\b \cf5 Any
+\f0\b0 \cf4 ]] \{\
+            \cf12 savedLocations\cf4  = savedData.\cf11 compactMap\cf4  \{ data 
+\f1\b \cf5 in
+\f0\b0 \cf4 \
+                
+\f1\b \cf5 guard
+\f0\b0 \cf4 \
+                    
+\f1\b \cf5 let
+\f0\b0 \cf4  latitude = data[\cf14 "latitude"\cf4 ] 
+\f1\b \cf5 as
+\f0\b0 \cf4 ? \cf8 CLLocationDegrees\cf4 ,\
+                    
+\f1\b \cf5 let
+\f0\b0 \cf4  longitude = data[\cf14 "longitude"\cf4 ] 
+\f1\b \cf5 as
+\f0\b0 \cf4 ? \cf8 CLLocationDegrees\cf4 ,\
+                    
+\f1\b \cf5 let
+\f0\b0 \cf4  name = data[\cf14 "name"\cf4 ] 
+\f1\b \cf5 as
+\f0\b0 \cf4 ? \cf8 String\cf4 \
+                
+\f1\b \cf5 else
+\f0\b0 \cf4  \{\
+                    
+\f1\b \cf5 return
+\f0\b0 \cf4  
+\f1\b \cf5 nil
+\f0\b0 \cf4 \
+                \}\
+                
+\f1\b \cf5 let
+\f0\b0 \cf4  coordinate = \cf8 CLLocationCoordinate2D\cf4 (\cf11 latitude\cf4 : latitude, \cf11 longitude\cf4 : longitude)\
+                
+\f1\b \cf5 return
+\f0\b0 \cf4  (coordinate: coordinate, name: name)\
+            \}\
+        \}\
+    \}\
+    \
+    
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 clearSavedLocations\cf4 () \{\
+        \cf12 savedLocations\cf4 .\cf11 removeAll\cf4 ()\
+        \cf7 UserDefaults\cf4 .\cf13 standard\cf4 .\cf11 removeObject\cf4 (\cf11 forKey\cf4 : \cf14 "savedLocations"\cf4 )\
+    \}\
+\
+    \cf2 // CLLocationManager Delegate methods\cf4 \
+    
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 locationManager\cf4 (\cf9 _\cf4  manager: \cf7 CLLocationManager\cf4 , \cf9 didUpdateLocations\cf4  locations: [\cf7 CLLocation\cf4 ]) \{\
+        
+\f1\b \cf5 if
+\f0\b0 \cf4  
+\f1\b \cf5 let
+\f0\b0 \cf4  location = locations.\cf13 last\cf4  \{\
+            \cf12 userLocation\cf4  = location.\cf13 coordinate\cf4 \
+            \cf12 locationManager\cf4 .\cf11 stopUpdatingLocation\cf4 () \cf2 // Stop updates to save battery after obtaining location\cf4 \
+        \}\
+    \}\
+    \
+    
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 locationManager\cf4 (\cf9 _\cf4  manager: \cf7 CLLocationManager\cf4 , \cf9 didChangeAuthorization\cf4  status: \cf8 CLAuthorizationStatus\cf4 ) \{\
+        
+\f1\b \cf5 switch
+\f0\b0 \cf4  status \{\
+        
+\f1\b \cf5 case
+\f0\b0 \cf4  .\cf13 authorizedWhenInUse\cf4 , .\cf13 authorizedAlways\cf4 :\
+            \cf12 locationPermissionDenied\cf4  = 
+\f1\b \cf5 false
+\f0\b0 \cf4 \
+            \cf12 locationManager\cf4 .\cf11 startUpdatingLocation\cf4 ()\
+        
+\f1\b \cf5 case
+\f0\b0 \cf4  .\cf13 denied\cf4 , .\cf13 restricted\cf4 :\
+            \cf12 locationPermissionDenied\cf4  = 
+\f1\b \cf5 true
+\f0\b0 \cf4 \
+        
+\f1\b \cf5 default
+\f0\b0 \cf4 :\
+            
+\f1\b \cf5 break
+\f0\b0 \cf4 \
+        \}\
+    \}\
+\}\
+\
+
+\f1\b \cf5 struct
+\f0\b0 \cf4  \cf6 ContentView\cf4 : \cf7 View\cf4  \{\
+    \cf8 @StateObject\cf4  
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 locationViewModel\cf4  = \cf15 LocationViewModel\cf4 ()\
+\
+    
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 body\cf4 : 
+\f1\b \cf5 some
+\f0\b0 \cf4  \cf7 View\cf4  \{\
+        \cf8 NavigationView\cf4  \{\
+            \cf8 VStack\cf4  \{\
+                \cf8 Text\cf4 (\cf14 "The Map App"\cf4 )\
+                    .\cf11 font\cf4 (.\cf13 largeTitle\cf4 )\
+                    .\cf11 padding\cf4 ()\
+                \
+                \cf8 Image\cf4 (\cf11 systemName\cf4 : \cf14 "globe.asia.australia.fill"\cf4 )\
+                    .\cf11 font\cf4 (.\cf11 system\cf4 (\cf11 size\cf4 :\cf16 50\cf4 ))\
+                    .\cf11 cornerRadius\cf4 (\cf16 10\cf4 )\
+                    .\cf11 padding\cf4 ()\
+                \
+                \cf8 Spacer\cf4 ()\
+                \
+                \cf8 VStack\cf4 (\cf11 spacing\cf4 : \cf16 20\cf4 ) \{\
+                    \cf17 ToolbarButton\cf4 (\cf10 destination\cf4 : \cf17 Page1View\cf4 (\cf10 locationViewModel\cf4 : \cf12 locationViewModel\cf4 , \cf10 selectedLocation\cf4 : 
+\f1\b \cf5 nil
+\f0\b0 \cf4 ), \cf10 label\cf4 : \cf14 "Map"\cf4 , \cf10 systemImage\cf4 : \cf14 "map"\cf4 )\
+                    \cf17 ToolbarButton\cf4 (\cf10 destination\cf4 : \cf17 Page2View\cf4 (\cf10 locationViewModel\cf4 : \cf12 locationViewModel\cf4 ), \cf10 label\cf4 : \cf14 "Saved"\cf4 , \cf10 systemImage\cf4 : \cf14 "bookmark"\cf4 )\
+                    \cf17 ToolbarButton\cf4 (\cf10 destination\cf4 : \cf17 Page3View\cf4 (), \cf10 label\cf4 : \cf14 "Info"\cf4 , \cf10 systemImage\cf4 : \cf14 "info.circle"\cf4 )\
+                \}\
+                .\cf11 padding\cf4 ()\
+                \
+                \cf8 Spacer\cf4 ()\
+                \
+                \cf2 // Show alert if location permission is denied\cf4 \
+                
+\f1\b \cf5 if
+\f0\b0 \cf4  \cf12 locationViewModel\cf4 .\cf12 locationPermissionDenied\cf4  \{\
+                    \cf8 Text\cf4 (\cf14 "Location permissions are disabled. Enable location permissions in settings for full functionality."\cf4 )\
+                        .\cf11 font\cf4 (.\cf13 caption\cf4 )\
+                        .\cf11 foregroundColor\cf4 (.\cf13 red\cf4 )\
+                        .\cf11 multilineTextAlignment\cf4 (.\cf13 center\cf4 )\
+                        .\cf11 padding\cf4 ()\
+                \}\
+            \}\
+            .\cf11 navigationBarTitle\cf4 (\cf14 "Main View"\cf4 , \cf11 displayMode\cf4 : .\cf13 inline\cf4 )\
+        \}\
+        .\cf11 navigationViewStyle\cf4 (\cf8 StackNavigationViewStyle\cf4 ())\
+        .\cf11 onAppear\cf4  \{\
+            \cf12 locationViewModel\cf4 .\cf10 requestLocationPermission\cf4 ()\
+        \}\
+    \}\
+\}\
+\
+\cf2 // Page 1: Map View\cf4 \
+
+\f1\b \cf5 struct
+\f0\b0 \cf4  \cf6 Page1View\cf4 : \cf7 View\cf4  \{\
+    \cf8 @ObservedObject\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 locationViewModel\cf4 : \cf15 LocationViewModel\cf4 \
+    
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 selectedLocation\cf4 : \cf8 CLLocationCoordinate2D\cf4 ? \cf2 // Accept an optional selected location to center on\cf4 \
+\
+    \cf8 @State\cf4  
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 mapCenter\cf4 : \cf8 CLLocationCoordinate2D\cf4 ?\
+    \cf8 @State\cf4  
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 placeName\cf4 : \cf8 String\cf4  = \cf14 ""\cf4 \
+\
+    
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 body\cf4 : 
+\f1\b \cf5 some
+\f0\b0 \cf4  \cf7 View\cf4  \{\
+        \cf8 VStack\cf4  \{\
+            \cf17 MapView\cf4 (\cf10 selectedLocation\cf4 : \cf12 $mapCenter\cf4 ,\
+                    \cf10 savedLocations\cf4 : \cf12 locationViewModel\cf4 .\cf12 savedLocations\cf4 ,\
+                    \cf10 userLocation\cf4 : \cf12 $locationViewModel\cf4 .\cf13 userLocation\cf4 ,\
+                    \cf10 shouldCenterOnUser\cf4 : \cf12 $locationViewModel\cf4 .\cf12 shouldCenterOnUser\cf4  \cf2 // Bind centering flag\cf4 \
+            )\
+            .\cf11 edgesIgnoringSafeArea\cf4 (.\cf13 top\cf4 )\
+            .\cf11 frame\cf4 (\cf11 height\cf4 : \cf16 500\cf4 )\
+            .\cf11 padding\cf4 ()\
+\
+            \cf8 TextField\cf4 (\cf14 "Enter place name"\cf4 , \cf11 text\cf4 : \cf12 $placeName\cf4 )\
+                .\cf11 padding\cf4 ()\
+                .\cf11 textFieldStyle\cf4 (\cf8 RoundedBorderTextFieldStyle\cf4 ())\
+                .\cf11 padding\cf4 (.\cf13 horizontal\cf4 )\
+\
+            \cf8 HStack\cf4  \{\
+                \cf8 Spacer\cf4 ()\
+                \cf8 Button\cf4 (\cf8 action\cf4 : \cf10 saveLocation\cf4 ) \{\
+                    \cf8 Text\cf4 (\cf14 "Save Location"\cf4 )\
+                        .\cf11 padding\cf4 ()\
+                        .\cf11 background\cf4 (\cf8 Color\cf4 .\cf13 green\cf4 )\
+                        .\cf11 foregroundColor\cf4 (.\cf13 white\cf4 )\
+                        .\cf11 cornerRadius\cf4 (\cf16 10\cf4 )\
+                \}\
+                \cf8 Spacer\cf4 ()\
+                \
+                \cf8 Button\cf4 (\cf8 action\cf4 : \cf12 locationViewModel\cf4 .\cf10 updateUserLocation\cf4 ) \{\
+                    \cf8 Image\cf4 (\cf11 systemName\cf4 : \cf14 "location.circle"\cf4 )\
+                        .\cf11 padding\cf4 ()\
+                        .\cf11 background\cf4 (\cf8 Color\cf4 .\cf13 blue\cf4 )\
+                        .\cf11 foregroundColor\cf4 (.\cf13 white\cf4 )\
+                        .\cf11 cornerRadius\cf4 (\cf16 10\cf4 )\
+                \}\
+                \cf8 Spacer\cf4 ()\
+            \}\
+        \}\
+        .\cf11 navigationBarTitle\cf4 (\cf14 "Map"\cf4 , \cf11 displayMode\cf4 : .\cf13 inline\cf4 )\
+        .\cf11 onAppear\cf4  \{\
+            
+\f1\b \cf5 if
+\f0\b0 \cf4  
+\f1\b \cf5 let
+\f0\b0 \cf4  selectedLocation = \cf12 selectedLocation\cf4  \{\
+                \cf12 mapCenter\cf4  = selectedLocation \cf2 // Center map on selected location if provided\cf4 \
+            \}\
+        \}\
+    \}\
+    \
+    
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 saveLocation\cf4 () \{\
+        
+\f1\b \cf5 if
+\f0\b0 \cf4  
+\f1\b \cf5 let
+\f0\b0 \cf4  location = \cf12 mapCenter\cf4 , !\cf12 placeName\cf4 .\cf13 isEmpty\cf4  \{\
+            \cf12 locationViewModel\cf4 .\cf12 savedLocations\cf4 .\cf11 append\cf4 ((coordinate: location, name: \cf12 placeName\cf4 ))\
+            \cf12 placeName\cf4  = \cf14 ""\cf4  \cf2 // Clear the text field\cf4 \
+        \}\
+    \}\
+\}\
+\
+\cf2 // Custom MapView to handle map display and selection\cf4 \
+
+\f1\b \cf5 struct
+\f0\b0 \cf4  \cf6 MapView\cf4 : \cf7 UIViewRepresentable\cf4  \{\
+    \cf8 @Binding\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 selectedLocation\cf4 : \cf8 CLLocationCoordinate2D\cf4 ?\
+    
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 savedLocations\cf4 : [(coordinate: \cf8 CLLocationCoordinate2D\cf4 , name: \cf8 String\cf4 )]\
+    \cf8 @Binding\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 userLocation\cf4 : \cf8 CLLocationCoordinate2D\cf4 ?\
+    \cf8 @Binding\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 shouldCenterOnUser\cf4 : \cf8 Bool\cf4  \cf2 // Centering flag\cf4 \
+    \
+    \cf8 @State\cf4  
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 currentSpan\cf4  = \cf8 MKCoordinateSpan\cf4 (\cf11 latitudeDelta\cf4 : \cf16 0.05\cf4 , \cf11 longitudeDelta\cf4 : \cf16 0.05\cf4 ) \cf2 // Track the current zoom level\cf4 \
+\
+    
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 makeUIView\cf4 (\cf9 context\cf4 : \cf8 Context\cf4 ) -> \cf7 MKMapView\cf4  \{\
+        
+\f1\b \cf5 let
+\f0\b0 \cf4  mapView = \cf7 MKMapView\cf4 ()\
+        mapView.\cf13 delegate\cf4  = context.\cf13 coordinator\cf4 \
+        
+\f1\b \cf5 let
+\f0\b0 \cf4  region = \cf8 MKCoordinateRegion\cf4 (\cf11 center\cf4 : \cf8 CLLocationCoordinate2D\cf4 (\cf11 latitude\cf4 : \cf16 61.4981\cf4 , \cf11 longitude\cf4 : \cf16 23.7600\cf4 ), \cf11 span\cf4 : \cf12 currentSpan\cf4 )\
+        mapView.\cf11 setRegion\cf4 (region, \cf11 animated\cf4 : 
+\f1\b \cf5 true
+\f0\b0 \cf4 )\
+        mapView.\cf13 showsUserLocation\cf4  = 
+\f1\b \cf5 true
+\f0\b0 \cf4 \
+\
+        
+\f1\b \cf5 return
+\f0\b0 \cf4  mapView\
+    \}\
+    \
+    
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 updateUIView\cf4 (\cf9 _\cf4  uiView: \cf7 MKMapView\cf4 , \cf9 context\cf4 : \cf8 Context\cf4 ) \{\
+        uiView.\cf11 removeAnnotations\cf4 (uiView.\cf13 annotations\cf4 )\
+        \
+        
+\f1\b \cf5 for
+\f0\b0 \cf4  location 
+\f1\b \cf5 in
+\f0\b0 \cf4  \cf12 savedLocations\cf4  \{\
+            
+\f1\b \cf5 let
+\f0\b0 \cf4  annotation = \cf7 MKPointAnnotation\cf4 ()\
+            annotation.\cf13 coordinate\cf4  = location.\cf13 coordinate\cf4 \
+            annotation.\cf13 title\cf4  = location.\cf13 name\cf4  \cf2 // Add title to annotation\cf4 \
+            uiView.\cf11 addAnnotation\cf4 (annotation)\
+        \}\
+        \
+        
+\f1\b \cf5 if
+\f0\b0 \cf4  \cf12 shouldCenterOnUser\cf4 , 
+\f1\b \cf5 let
+\f0\b0 \cf4  userLocation = \cf12 userLocation\cf4  \{\
+            \cf2 // Center map on user location when requested, preserving zoom level\cf4 \
+            
+\f1\b \cf5 let
+\f0\b0 \cf4  region = \cf8 MKCoordinateRegion\cf4 (\cf11 center\cf4 : userLocation, \cf11 span\cf4 : \cf12 currentSpan\cf4 )\
+            uiView.\cf11 setRegion\cf4 (region, \cf11 animated\cf4 : 
+\f1\b \cf5 true
+\f0\b0 \cf4 )\
+            \cf12 shouldCenterOnUser\cf4  = 
+\f1\b \cf5 false
+\f0\b0 \cf4  \cf2 // Reset flag to allow free roaming\cf4 \
+        \} 
+\f1\b \cf5 else
+\f0\b0 \cf4  
+\f1\b \cf5 if
+\f0\b0 \cf4  
+\f1\b \cf5 let
+\f0\b0 \cf4  centerLocation = \cf12 selectedLocation\cf4  \{\
+            \cf2 // Center map on selected location (if provided)\cf4 \
+            
+\f1\b \cf5 let
+\f0\b0 \cf4  region = \cf8 MKCoordinateRegion\cf4 (\cf11 center\cf4 : centerLocation, \cf11 span\cf4 : \cf12 currentSpan\cf4 )\
+            uiView.\cf11 setRegion\cf4 (region, \cf11 animated\cf4 : 
+\f1\b \cf5 true
+\f0\b0 \cf4 )\
+        \}\
+    \}\
+    \
+    
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 makeCoordinator\cf4 () -> \cf15 Coordinator\cf4  \{\
+        \cf15 Coordinator\cf4 (
+\f1\b \cf5 self
+\f0\b0 \cf4 )\
+    \}\
+    \
+    
+\f1\b \cf5 class
+\f0\b0 \cf4  \cf6 Coordinator\cf4 : \cf7 NSObject\cf4 , \cf7 MKMapViewDelegate\cf4  \{\
+        
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 parent\cf4 : \cf17 MapView\cf4 \
+        \
+        
+\f1\b \cf5 init
+\f0\b0 \cf4 (\cf9 _\cf4  parent: \cf17 MapView\cf4 ) \{\
+            
+\f1\b \cf5 self
+\f0\b0 \cf4 .\cf12 parent\cf4  = parent\
+        \}\
+        \
+        
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 mapView\cf4 (\cf9 _\cf4  mapView: \cf7 MKMapView\cf4 , \cf9 regionDidChangeAnimated\cf4  animated: \cf8 Bool\cf4 ) \{\
+            \cf2 // Update the current zoom level when the user manually changes the map region\cf4 \
+            \cf12 parent\cf4 .\cf12 currentSpan\cf4  = mapView.\cf13 region\cf4 .\cf13 span\cf4 \
+        \}\
+    \}\
+\}\
+\
+\cf2 // Page 2: Display Saved Places\cf4 \
+
+\f1\b \cf5 struct
+\f0\b0 \cf4  \cf6 Page2View\cf4 : \cf7 View\cf4  \{\
+    \cf8 @ObservedObject\cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 locationViewModel\cf4 : \cf15 LocationViewModel\cf4 \
+\
+    
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 body\cf4 : 
+\f1\b \cf5 some
+\f0\b0 \cf4  \cf7 View\cf4  \{\
+        \cf8 VStack\cf4  \{\
+            \cf8 List\cf4  \{\
+                \cf8 ForEach\cf4 (\cf12 locationViewModel\cf4 .\cf12 savedLocations\cf4 .\cf13 indices\cf4 , \cf11 id\cf4 : \\.
+\f1\b \cf5 self
+\f0\b0 \cf4 ) \{ index 
+\f1\b \cf5 in
+\f0\b0 \cf4 \
+                    
+\f1\b \cf5 let
+\f0\b0 \cf4  location = \cf12 locationViewModel\cf4 .\cf12 savedLocations\cf4 [index]\
+                    \cf8 NavigationLink\cf4 (\cf11 destination\cf4 : \cf17 Page1View\cf4 (\cf10 locationViewModel\cf4 : \cf12 locationViewModel\cf4 , \cf10 selectedLocation\cf4 : location.\cf13 coordinate\cf4 )) \{\
+                        \cf8 Text\cf4 (\cf14 "\cf4 \\(location.\cf13 name\cf4 )\cf14 : \cf4 \\(location.\cf13 coordinate\cf4 .\cf13 latitude\cf4 )\cf14 , \cf4 \\(location.\cf13 coordinate\cf4 .\cf13 longitude\cf4 )\cf14 "\cf4 )\
+                    \}\
+                \}\
+                .\cf11 onDelete\cf4 (\cf11 perform\cf4 : \cf10 deleteLocation\cf4 )\
+            \}\
+            .\cf11 navigationBarTitle\cf4 (\cf14 "Saved Places"\cf4 , \cf11 displayMode\cf4 : .\cf13 inline\cf4 )\
+            .\cf11 navigationBarItems\cf4 (\cf11 trailing\cf4 : \cf8 EditButton\cf4 ())\
+            \
+            \cf8 Button\cf4 (\cf8 action\cf4 : \cf12 locationViewModel\cf4 .\cf10 clearSavedLocations\cf4 ) \{\
+                \cf8 Image\cf4 (\cf11 systemName\cf4 : \cf14 "trash"\cf4 )\
+                    .\cf11 padding\cf4 ()\
+                    .\cf11 background\cf4 (\cf8 Color\cf4 .\cf13 red\cf4 )\
+                    .\cf11 foregroundColor\cf4 (.\cf13 white\cf4 )\
+                    .\cf11 cornerRadius\cf4 (\cf16 10\cf4 )\
+            \}\
+            .\cf11 padding\cf4 ()\
+        \}\
+    \}\
+    \
+    
+\f1\b \cf5 private
+\f0\b0 \cf4  
+\f1\b \cf5 func
+\f0\b0 \cf4  \cf9 deleteLocation\cf4 (\cf9 at\cf4  offsets: \cf8 IndexSet\cf4 ) \{\
+        \cf12 locationViewModel\cf4 .\cf12 savedLocations\cf4 .\cf11 remove\cf4 (\cf11 atOffsets\cf4 : offsets)\
+    \}\
+\}\
+\
+\cf2 // Empty Page 3 View\cf4 \
+
+\f1\b \cf5 struct
+\f0\b0 \cf4  \cf6 Page3View\cf4 : \cf7 View\cf4  \{\
+    
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 body\cf4 : 
+\f1\b \cf5 some
+\f0\b0 \cf4  \cf7 View\cf4  \{\
+        \cf8 Text\cf4 (\cf14 "Info"\cf4 )\
+            .\cf11 font\cf4 (.\cf13 largeTitle\cf4 )\
+            .\cf11 padding\cf4 ()\
+        \
+        \cf8 Spacer\cf4 ()\
+        \cf8 HStack\cf4 \{\
+            \cf8 Image\cf4 (\cf11 systemName\cf4 : \cf14 "paintbrush"\cf4 )\
+                .\cf11 font\cf4 (.\cf11 system\cf4 (\cf11 size\cf4 : \cf16 35\cf4 ))\
+                .\cf11 padding\cf4 (\cf16 20\cf4 )\
+            \cf8 Image\cf4 (\cf11 systemName\cf4 : \cf14 "paintpalette"\cf4 )\
+                .\cf11 font\cf4 (.\cf11 system\cf4 (\cf11 size\cf4 : \cf16 35\cf4 ))\
+                .\cf11 padding\cf4 (\cf16 20\cf4 )\
+        \}\
+        \cf8 Text\cf4 (\cf14 "Created by Jasu Ahonen / 2206645"\cf4 )\
+            .\cf11 navigationBarTitle\cf4 (\cf14 "Info"\cf4 , \cf11 displayMode\cf4 : .\cf13 inline\cf4 )\
+        \cf8 Text\cf4 (\cf14 "Mobile App Development 2 / TAMK 2024"\cf4 )\
+        \cf8 Spacer\cf4 ()\
+        \cf8 Text\cf4 (\cf14 "Created using SwiftUI on Xcode"\cf4 )\
+            .\cf11 padding\cf4 (\cf16 20\cf4 )\
+        \cf8 Image\cf4 (\cf11 systemName\cf4 : \cf14 "swift"\cf4 )\
+            .\cf11 font\cf4 (.\cf11 system\cf4 (\cf11 size\cf4 :\cf16 50\cf4 ))\
+        \cf8 Spacer\cf4 ()\
+    \}\
+\}\
+\
+
+\f1\b \cf5 struct
+\f0\b0 \cf4  \cf6 ToolbarButton\cf4 <Destination: \cf7 View\cf4 >: \cf7 View\cf4  \{\
+    
+\f1\b \cf5 let
+\f0\b0 \cf4  \cf9 destination\cf4 : Destination\
+    
+\f1\b \cf5 let
+\f0\b0 \cf4  \cf9 label\cf4 : \cf8 String\cf4 \
+    
+\f1\b \cf5 let
+\f0\b0 \cf4  \cf9 systemImage\cf4 : \cf8 String\cf4 \
+    \
+    
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 body\cf4 : 
+\f1\b \cf5 some
+\f0\b0 \cf4  \cf7 View\cf4  \{\
+        \cf8 NavigationLink\cf4 (\cf11 destination\cf4 : \cf12 destination\cf4 ) \{\
+            \cf8 Label\cf4  \{\
+                \cf8 Text\cf4 (\cf12 label\cf4 )\
+                    .\cf11 font\cf4 (.\cf13 headline\cf4 )\
+                    .\cf11 foregroundColor\cf4 (.\cf13 white\cf4 )\
+            \} \cf13 icon\cf4 : \{\
+                \cf8 Image\cf4 (\cf11 systemName\cf4 : \cf12 systemImage\cf4 )\
+                    .\cf11 foregroundColor\cf4 (.\cf13 white\cf4 )\
+            \}\
+            .\cf11 frame\cf4 (\cf11 width\cf4 : \cf16 140\cf4 , \cf11 height\cf4 : \cf16 50\cf4 )\
+            .\cf11 background\cf4 (\cf8 Color\cf4 .\cf13 black\cf4 )\
+            .\cf11 cornerRadius\cf4 (\cf16 10\cf4 )\
+        \}\
+    \}\
+\}\
+\
+
+\f1\b \cf5 struct
+\f0\b0 \cf4  \cf6 ContentView_Previews\cf4 : \cf7 PreviewProvider\cf4  \{\
+    
+\f1\b \cf5 static
+\f0\b0 \cf4  
+\f1\b \cf5 var
+\f0\b0 \cf4  \cf9 previews\cf4 : 
+\f1\b \cf5 some
+\f0\b0 \cf4  \cf7 View\cf4  \{\
+        \cf17 ContentView\cf4 ()\
+    \}\
+\}\
+}
