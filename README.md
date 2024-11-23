@@ -2,6 +2,8 @@
 
 This repo contains a ContentView of a MapApp created using Xcode and SwiftUI
 
+You can copy-paste the .rtf document to your contentView to run this application. 
+
 Core functions: three options with a toolbar-button ->
 
 <img src="https://github.com/user-attachments/assets/cdb7d312-a3d8-45a7-a53b-e37fcd27a651" alt="Screenshot 2024-11-14 at 12 16 35" width="400"/>
